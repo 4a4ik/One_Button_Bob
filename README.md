@@ -1,3 +1,3 @@
-button-knight
+Button Knight
 =============
-Game writed on C++ with SDL
+Game written in c++ with SDL, for my univesity project
