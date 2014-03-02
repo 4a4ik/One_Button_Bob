@@ -1,10 +1,12 @@
 #include "Game.h"
 #include"TextureManager.h"
 #include"Player.h"
-#include"Background.h"
+#include"Level.h"
 
 TextureManager TheTextureManager; // working with images
 Player ThePlayer( 300, 320 );
+
+Level TheLevel; // move the background
 
 bool Game::init(const char* title, int xpos, int ypos, int width, int height, bool fullscreen)
 {
@@ -96,11 +98,18 @@ void Game::handle_events()
 void Game::update()
 {
 	ThePlayer.update();
+	TheLevel.move( ThePlayer.xVel, ThePlayer.yVel );
 
 
 	SDL_RenderClear(m_pRenderer); // Delete everything from screen
 
-	TheTextureManager.draw( "bg", 0, 0, 640, 480, m_pRenderer, 0 );
+	
+
+	TheTextureManager.draw( TheLevel.bg_name, (int)TheLevel.bg.x, (int)TheLevel.bg.y, TheLevel.width, TheLevel.height, m_pRenderer, TheLevel.flip );
+	TheTextureManager.draw( TheLevel.bg_name, (int)TheLevel.bg.x + TheLevel.width, (int)TheLevel.bg.y, TheLevel.width, TheLevel.height, m_pRenderer, TheLevel.flip );
+	TheTextureManager.draw( TheLevel.bg_name, (int)TheLevel.bg.x - TheLevel.width, (int)TheLevel.bg.y, TheLevel.width, TheLevel.height, m_pRenderer, TheLevel.flip );
+
+	
 
 	TheTextureManager.drawFrame( "animate", (int)ThePlayer.x, (int)ThePlayer.y, ThePlayer.m_width, ThePlayer.m_height,
 		2, ThePlayer.frame, m_pRenderer, 1 );

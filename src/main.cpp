@@ -6,6 +6,7 @@ const int DELAY_TIME = 1000 / FPS;
 
 int main(int argc, char* argv[])
 {
+
 	Game TheGame;
 	Uint32 frameStart, frameTime;
 	

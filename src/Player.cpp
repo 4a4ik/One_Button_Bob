@@ -29,8 +29,10 @@ void Player::handle_input( int type, SDL_Scancode key_code )
 
 void Player::update()
 {
+	/*
 	x += xVel;
 	y += yVel;
+	*/
 
 	frame = int(((SDL_GetTicks() / 100) % 3));
 
