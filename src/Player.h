@@ -2,30 +2,34 @@
 #define _PLAYER_H
 
 #include "includes.h"
-
+#include"Tiles.h"
 
 class Player
 {
 public:
 
-	Player(float X, float Y) { x = X; y = Y; m_width = 38; m_height = 48; };
+	Player(int X, int Y) ;
 
-	void handle_input( int type, SDL_Scancode key_code );
-	void update();
-	void show();
+	void handle_input( int type, SDL_Scancode key_code, int map_type );
+	void update( std::vector<Tile> &tiles, int map_type, bool ending  );
 
-	float x, y, xVel, yVel;
+	SDL_Rect box;
+	SDL_Rect get_box();
 
-	int m_width;
-	int m_height;
+	bool dead, restart, jump, pressed, go_right, sound;
+
+	int shake;
+
+	float xVel, yVel, force;
+
+	int col_tile, start_x, start_y;
+
+	int level_x, level_y;
 
 	int m_currentRow;
 	int m_currentFrame;
 
-	int frame;
-
-//	std::string m_textureID;
-
+	int frame, frame_line, time_check;
 };
 
 #endif // _PLAYER_H
