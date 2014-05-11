@@ -16,7 +16,7 @@ public:
 	SDL_Rect box;
 	SDL_Rect get_box();
 
-	bool dead, restart, jump, pressed, go_right, sound;
+	bool dead, restart, jump, pressed, go_right, play_sound;
 
 	int shake;
 

@@ -20,7 +20,7 @@ Player::Player(int X, int Y)
 
 	go_right = true;
 
-	sound = dead = jump = pressed = restart = false;
+	play_sound = dead = jump = pressed = restart = false;
 }
 
 void Player::handle_input( int type, SDL_Scancode key_code, int map_type )
@@ -140,7 +140,7 @@ void Player::update( std::vector<Tile> &tiles, int map_type, bool ending )
 		dead = true;
 		shake = 1;
 
-		tiles[ col_tile ].killer = 1;
+		tiles[ col_tile ].killer = true;
 		frame = 0;
 		force = 0;
 	}
@@ -149,10 +149,10 @@ void Player::update( std::vector<Tile> &tiles, int map_type, bool ending )
 	{
 		force = 0;
 		pressed = false;
-		if (!sound)      
+		if (!play_sound)      
 		{
 				Mix_PlayChannel( -1, dead_sound, 0 ); 
-				sound = true;
+				play_sound = true;
 		}
 
 		xVel = 0;
@@ -167,9 +167,7 @@ void Player::update( std::vector<Tile> &tiles, int map_type, bool ending )
 
 			if( frame >= 7 )
 			{
-				dead = false;
 				restart = true;
-				sound = false;
 			}
 		}
 	}
@@ -182,6 +180,8 @@ void Player::update( std::vector<Tile> &tiles, int map_type, bool ending )
 		box.y = start_y;
 		xVel = 0;
 		yVel = 0;
+		dead = false;
+		play_sound = false;
 
 		if (map_type == CLICK_SHOOT || map_type == CLICK_BOSS)
 			frame_line = 3;
