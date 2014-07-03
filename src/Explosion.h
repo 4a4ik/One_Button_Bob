@@ -9,7 +9,7 @@ public:
 
 	Explosion(int X, int Y);
 
-	int boss_x, boss_y, random;
+	int random;
 
 	unsigned int time_check;
 
@@ -19,9 +19,9 @@ public:
 
 	bool play_sound;
 
-	void update( bool ending );
+	void update();
 
 };
 
 
-#endif // EXPLOSION_H_INCLUDED
+#endif

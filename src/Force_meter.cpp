@@ -2,8 +2,7 @@
 
 void Force_meter::update( int man_x, int man_y, int force, int map_type )
 {
-	if (!force)		width = 0;
-	else	width = force;
+	width = force;
 
 	if (map_type == CLICK_JUMP || map_type == CLICK_JUMP_STOP )
 	{

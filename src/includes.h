@@ -1,11 +1,10 @@
 #ifndef _INCLUDES_H
 #define _INCLUDES_H
 
-
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
-//160 x 120
+// level images 160 x 120
 
 #define TILE_TYPES 12
 #define MAGNIFY 4
@@ -117,6 +116,7 @@ extern	Mix_Chunk *boomerang_sound;
 extern	Mix_Chunk *explosion_sound;
 extern	Mix_Chunk *boss_dead_sound;
 extern	Mix_Chunk *boss_dead_sound2;
+extern	Mix_Chunk *boss_jump_sound;
 extern	Mix_Chunk *ghost_sound;
 extern	Mix_Chunk *hurt_sound;
 
@@ -129,4 +129,4 @@ bool init_music();
 void close_music();
 
 
-#endif  //  _INCLUDES_H
+#endif

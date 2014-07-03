@@ -3,7 +3,7 @@
 #include"Player.h"
 #include"Tiles.h"
 #include"includes.h"
-#include"Font.h"
+#include"Score.h"
 #include"Boomerang.h"
 #include"Force_meter.h"
 #include"Explosion.h"
@@ -34,8 +34,7 @@ const int map_types[] = {
 
 Boomerang TheBoomerang( 38, 305 );
 
-//Rendered texture
-Font Score;
+Score myScore;
 
 std::vector<Tile> tiles;
 
@@ -50,7 +49,7 @@ bool Game::init(const char* title, int xpos, int ypos, int width, int height, bo
 
 	level = 1;
 	clicks = 0;
-	pause = false;
+	pause = true;
 
 	level_name = "level_01";
 
@@ -187,31 +186,32 @@ bool Game::init(const char* title, int xpos, int ypos, int width, int height, bo
 
 				if(!TheTextureManager.load("files/img/font.png", "font", m_pRenderer))
 					return false;
+
+				if(!TheTextureManager.load("files/img/pause.png", "pause", m_pRenderer))
+					return false;
 			}
 			else
 			{
 				std::cout << "renderer init fail\n";
-				return false; // renderer init fail
+				return false; 
 			}
 		}
 		else
 		{
 			std::cout << "window init fail\n";
-			return false; // window init fail
+			return false; 
 		}
 	}
 	else
 	{
 		std::cout << "SDL init fail\n";
-		return false; // SDL init fail
+		return false;
 	}
 	
 	if( init_music() )
 		std::cout << "Music ok! \n";
 	else
 		std::cout << "Music FAIL! \n";
-		
-	//Mix_PauseMusic();
 
 	if( !set_tiles( tiles, level  ) )
 		return false;
@@ -255,7 +255,7 @@ void Game::handle_events()
 				ThePlayer.handle_input( 0, game_event.key.keysym.scancode, map_type );
 			}
 		}
-		else if ( game_event.type == SDL_MOUSEBUTTONDOWN && !DEVELOPER && !ENDING )
+		else if ( game_event.type == SDL_MOUSEBUTTONDOWN && !DEVELOPER && !ENDING && game_event.button.button == SDL_BUTTON_LEFT )
 		{
 			ThePlayer.handle_input( 3, game_event.key.keysym.scancode, map_type  );
 		}
@@ -264,20 +264,30 @@ void Game::handle_events()
 		{
 			if ( game_event.button.button == SDL_BUTTON_LEFT )
 			{
-				TheBoomerang.handle_input( map_type );
-				ThePlayer.handle_input( 4, game_event.key.keysym.scancode, map_type );
-
-				if ( inside_box( game_event.button.x, game_event.button.y, SPEAKER_X, SPEAKER_Y, SPEAKER_W * MAGNIFY, SPEAKER_H * MAGNIFY ) )
+				if ( inside_box( game_event.button.x, game_event.button.y, PAUSE_X, PAUSE_Y, PAUSE_W * MAGNIFY, PAUSE_H * MAGNIFY ) )
 				{
-					if ( Mix_PausedMusic() )	Mix_ResumeMusic();
-					else	Mix_PauseMusic();
-
-				}
-				else if ( inside_box( game_event.button.x, game_event.button.y, PAUSE_X, PAUSE_Y, PAUSE_W * MAGNIFY, PAUSE_H * MAGNIFY ) )
 					pause = !pause;
+					if ( !pause )			Mix_ResumeMusic();
+					else					Mix_PauseMusic();
+				}
 
-				else 
+				else if ( inside_box( game_event.button.x, game_event.button.y, SPEAKER_X, SPEAKER_Y, SPEAKER_W * MAGNIFY, SPEAKER_H * MAGNIFY ) )
+				{
+					if ( Mix_PausedMusic() )		Mix_ResumeMusic();
+					else							Mix_PauseMusic();
+				}
+
+				else if (!pause && !FINALE)
+				{
+					TheBoomerang.handle_input( map_type );
+					ThePlayer.handle_input( 4, game_event.key.keysym.scancode, map_type );
 					clicks++;
+				}
+				else if (pause && !FINALE)	
+				{
+					pause = false;
+					Mix_ResumeMusic();
+				}
 			}
 		}
 
@@ -312,47 +322,48 @@ void Game::handle_events()
 
 void Game::update()
 {
-	if ( !DEVELOPER && !pause)
+	if (!DEVELOPER && !pause)
 	{
-		ThePlayer.update( tiles, map_type, ENDING );
+		ThePlayer.update( tiles, map_type );
+
+		if (!FINALE)
+			TheBoomerang.update( tiles, ThePlayer.box.x, ThePlayer.dead, map_type );
 
 		if (map_type != CLICK_BOSS)
 			Fmeter.update( ThePlayer.box.x, ThePlayer.box.y, (int)ThePlayer.force, map_type );
 		else
 			Fmeter.update( ThePlayer.box.x, ThePlayer.box.y, boss_hp, map_type );
-	}
-
-	if ( !DEVELOPER && !pause && !FINALE)
-		TheBoomerang.update( tiles, ThePlayer.box.x, ThePlayer.dead, map_type );
-		
-	if (map_type == CLICK_BOSS)
-	{
-		for( int n = 0; n < EXPLOSIONS_NUM; n++)
-			explosions[ n ].update( FINALE );
-	}
-
-	Score.update( map_type, clicks );
 	
-	SDL_RenderClear(m_pRenderer); // Delete everything from screen
+		if (map_type == CLICK_BOSS)
+		{
+			for( int n = 0; n < EXPLOSIONS_NUM; n++)
+				explosions[ n ].update();
+		}
+	}
 
-	TheTextureManager.draw( level_name, ThePlayer.level_x, ThePlayer.level_y, SCREEN_WIDTH, SCREEN_HEIGHT, m_pRenderer);
+	myScore.update( map_type, clicks );
+
+
+	
+	SDL_RenderClear( m_pRenderer ); // Delete everything from screen
+
+	TheTextureManager.draw( level_name, ThePlayer.level_x, ThePlayer.level_y, SCREEN_WIDTH, SCREEN_HEIGHT, m_pRenderer );
 
 	if (map_type == END)
 		TheTextureManager.just_draw( "end", 0, 0, SCREEN_WIDTH , SCREEN_HEIGHT, m_pRenderer );
 	
 	for( unsigned int n = 0; n < tiles.size(); n++ )
 	{
-		if (ThePlayer.restart)
+		if ( ThePlayer.restart )
 			tiles[ n ].restart();
 
-		if( !pause && !DEVELOPER )
+		if ( !pause && !DEVELOPER )
 			tiles[ n ].update( ThePlayer.box.x, ThePlayer.dead );
 
 		// draw collide boxes if developer mode active
 		if ( DEVELOPER )
-		{
 			TheTextureManager.draw_tile( names[ 0 ], tiles[ n ].start_x, tiles[ n ].start_y, 1, 1, tiles[ n ].box.w, tiles[ n ].box.h, m_pRenderer);
-		}
+
 
 		else if ( tiles[ n ].type == BAT )
 			TheTextureManager.drawFrame( names[ tiles[ n ].type ], tiles[ n ].box.x + ThePlayer.level_x, tiles[ n ].box.y - ThePlayer.frame * 3 + ThePlayer.level_y, tiles[ n ].box.w, tiles[ n ].box.h, tiles[ n ].frame_line, tiles[ n ].frame, m_pRenderer);
@@ -360,15 +371,16 @@ void Game::update()
 		else if ( tiles[ n ].type != WALL )
 			TheTextureManager.drawFrame( names[ tiles[ n ].type ], tiles[ n ].box.x + ThePlayer.level_x, tiles[ n ].box.y + ThePlayer.level_y, tiles[ n ].box.w, tiles[ n ].box.h, tiles[ n ].frame_line, tiles[ n ].frame, m_pRenderer);
 
-		if (tiles[ n ].shake)
+		if ( tiles[ n ].shake )
 		{
 			ThePlayer.shake = 25;
 			tiles[ n ].shake = false;
 		}
-		if (tiles[ n ].type == BOSS)
+		if ( tiles[ n ].type == BOSS )
 		{
 			boss_hp = tiles[ n ].hp;
-			if (boss_hp <= 0)		
+
+			if ( boss_hp <= 0 )		
 			{
 				ENDING = true;
 				FINALE = true;
@@ -376,28 +388,22 @@ void Game::update()
 
 				Mix_PauseMusic();
 			}
-			if (tiles[ n ].dead)	
-			{
+
+			if ( tiles[ n ].dead )			
 				ENDING = false;
-			}
 		}
 	}
 
-	TheTextureManager.draw( "icons_fon", 0, 0, SCREEN_WIDTH, 12 * MAGNIFY, m_pRenderer);
+	TheTextureManager.draw( "icons_fon", 0, 0, SCREEN_WIDTH, 12 * MAGNIFY, m_pRenderer );
 
-	if ( DEVELOPER )
-		TheTextureManager.drawFrame( "dev_tiles", 300, 10, 10 * MAGNIFY, 10 * MAGNIFY, 1, DEV_TYPE, m_pRenderer);
-
-	TheTextureManager.draw( "icons", SPEAKER_X, SPEAKER_Y, 22 * MAGNIFY, SPEAKER_H * MAGNIFY, m_pRenderer);
-
-	if (map_type != END)
+	if ( map_type != END )
 	{
-		if (map_type == CLICK_BOSS)
+		if ( map_type == CLICK_BOSS )
 		{
 			TheTextureManager.draw( "life_bar", Fmeter.x + ThePlayer.level_x, Fmeter.y + ThePlayer.level_y, LIFE_METER_W * MAGNIFY, LIFE_METER_H * MAGNIFY, m_pRenderer);
 			TheTextureManager.draw( "red", Fmeter.r_x + ThePlayer.level_x, Fmeter.r_y + ThePlayer.level_y, Fmeter.width * MAGNIFY, ( LIFE_METER_H - 4 ) * MAGNIFY, m_pRenderer);
 		}
-		else
+		else if (map_type == CLICK_JUMP || map_type == CLICK_JUMP_STOP)
 		{
 			TheTextureManager.draw( "force_meter", Fmeter.x + ThePlayer.level_x, Fmeter.y + ThePlayer.level_y, FORCE_METER_W * MAGNIFY, FORCE_METER_H * MAGNIFY, m_pRenderer);
 			TheTextureManager.draw( "red", Fmeter.r_x + ThePlayer.level_x, Fmeter.r_y + ThePlayer.level_y, Fmeter.width * MAGNIFY, ( FORCE_METER_H - 2 ) * MAGNIFY, m_pRenderer);
@@ -410,21 +416,32 @@ void Game::update()
 		TheTextureManager.drawFrame( "hero", ThePlayer.box.x + ThePlayer.level_x, ThePlayer.box.y - ThePlayer.frame + ThePlayer.level_y, ThePlayer.box.w, ThePlayer.box.h,
 			ThePlayer.frame_line, ThePlayer.frame, m_pRenderer );
 
-		if (boss_hp > 0 && map_type == CLICK_BOSS)
+		if ( boss_hp > 0 && map_type == CLICK_BOSS )
 			TheTextureManager.draw_rotate( "boomerang", TheBoomerang.box.x + ThePlayer.level_x, TheBoomerang.box.y + ThePlayer.level_y, 2 * MAGNIFY, 5 * MAGNIFY, m_pRenderer, TheBoomerang.angle );
-		else if (map_type != CLICK_BOSS)
+		else if ( map_type != CLICK_BOSS )
 			TheTextureManager.draw_rotate( "boomerang", TheBoomerang.box.x + ThePlayer.level_x, TheBoomerang.box.y + ThePlayer.level_y, 2 * MAGNIFY, 5 * MAGNIFY, m_pRenderer, TheBoomerang.angle );
 	}
+	
+	if (DEVELOPER)
+		TheTextureManager.drawFrame( "dev_tiles", 300, 10, 10 * MAGNIFY, 10 * MAGNIFY, 1, DEV_TYPE, m_pRenderer);
+
+	TheTextureManager.draw( "icons", SPEAKER_X, SPEAKER_Y, 22 * MAGNIFY, SPEAKER_H * MAGNIFY, m_pRenderer);
 
 	// SCORE CLICKS
-	TheTextureManager.draw_justFrame( "font", Score.x1 + ThePlayer.level_x, Score.y + ThePlayer.level_y, Score.w, Score.h,
-			1, Score.first, m_pRenderer );
+	TheTextureManager.draw_justFrame( "font", myScore.x1 + ThePlayer.level_x, myScore.y + ThePlayer.level_y, myScore.w, myScore.h,
+			1, myScore.first, m_pRenderer );
 	if (clicks >= 10)
-		TheTextureManager.draw_justFrame( "font", Score.x2 + ThePlayer.level_x, Score.y + ThePlayer.level_y, Score.w, Score.h,
-				1, Score.second, m_pRenderer );
+		TheTextureManager.draw_justFrame( "font", myScore.x2 + ThePlayer.level_x, myScore.y + ThePlayer.level_y, myScore.w, myScore.h,
+				1, myScore.second, m_pRenderer );
 	if (clicks >= 100)
-		TheTextureManager.draw_justFrame( "font", Score.x3 + ThePlayer.level_x, Score.y + ThePlayer.level_y, Score.w, Score.h,
-				1, Score.third, m_pRenderer );
+		TheTextureManager.draw_justFrame( "font", myScore.x3 + ThePlayer.level_x, myScore.y + ThePlayer.level_y, myScore.w, myScore.h,
+				1, myScore.third, m_pRenderer );
+	if (clicks >= 1000)
+		TheTextureManager.draw_justFrame( "font", myScore.x4 + ThePlayer.level_x, myScore.y + ThePlayer.level_y, myScore.w, myScore.h,
+				1, myScore.fourth, m_pRenderer );
+
+	if (pause)
+		TheTextureManager.just_draw( "pause", 0, 0, 640, 480, m_pRenderer);
 
 	SDL_RenderPresent(m_pRenderer); // Draw everything
 
@@ -467,7 +484,6 @@ void Game::clean()
 	SDL_DestroyRenderer(m_pRenderer);
 
 	//Quit SDL subsystems
-	TTF_Quit();
     Mix_Quit();
     IMG_Quit();
 	SDL_Quit();

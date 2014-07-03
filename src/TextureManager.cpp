@@ -96,11 +96,6 @@ void TextureManager::draw_tile(std::string id, int x, int y, int img_width, int 
 	SDL_RenderCopy(pRenderer, m_textureMap[id], &srcRect, &destRect);
 }
 
-void TextureManager::clearFromTextureMap(std::string id)
-{
-	m_textureMap.erase(id);
-}
-
 void TextureManager::drawFrame(std::string id, int x, int y, int width, int height, int currentRow,
 	int currentFrame, SDL_Renderer *pRenderer)
 {

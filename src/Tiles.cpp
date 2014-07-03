@@ -10,15 +10,13 @@ Tile::Tile( int X, int Y, int W, int H, int Type )
 	type = Type;
 
 	frame_line = 1;
-	frame = 0;
-	time_check = 0;
-	random = 0;
+	frame =	time_check = random = 0;
 
 	start_hp = hp = 146;
 
 	random = rand() % 30 + 3;
 
-	play_sound = go_left = damaged = go_down = go_up = killer = dead = false;
+	play_sound = go_left = damaged = go_down = go_up  = dead = false;
 }
 
 void Tile::update( const int &man_x, bool restart )
@@ -51,11 +49,11 @@ void Tile::update( const int &man_x, bool restart )
 	}
 	else if ( type == ARROW )
 	{
-		if ( man_x >= box.x - 110 && box.y <= SCREEN_HEIGHT || box.y != start_y )
-			box.y += 5;
+		if ( man_x >= box.x - 70 && box.y <= SCREEN_HEIGHT || box.y != start_y )
+			box.y += 8;
 	}
 
-	else if ( type == BOMB && killer )
+	else if ( type == BOMB && dead && box.x >= 0 )
 	{
 		if (!play_sound)
 		{
@@ -68,24 +66,17 @@ void Tile::update( const int &man_x, bool restart )
 
 			frame++;
 
-			if( frame >= 9 )
+			if( frame >= 8 )
 			{
 				box.x = -100;
 				frame = 0;
-				play_sound = killer = false;
 			}
 		}
 	}
 	else if ( type == BAT )
 	{
-		if (dead)
+		if (dead && box.x > -50)
 		{
-			if (!play_sound)
-			{
-				Mix_PlayChannel( -1, hurt_sound, 0 );
-				play_sound = true;
-			}
-
 			if ( int((SDL_GetTicks() / 40) % 2) != time_check )
 			{
 				time_check = int((SDL_GetTicks() / 40) % 2);
@@ -96,7 +87,6 @@ void Tile::update( const int &man_x, bool restart )
 				{
 					frame = 0;
 					box.x = -50;
-					dead = false;
 				}
 			}
 		}
@@ -131,7 +121,7 @@ void Tile::update( const int &man_x, bool restart )
 					box.x = -100;
 			}
 		}
-		else if ( man_x >= box.x - 200 )
+		else if ( man_x >= box.x - 150 )
 		{
 			if (!play_sound)
 			{
@@ -162,9 +152,9 @@ void Tile::update( const int &man_x, bool restart )
 	{
 		if (dead)
 		{
-			if ( int((SDL_GetTicks() / 120) % 2) != time_check )
+			if ( int((SDL_GetTicks() / 50) % 2) != time_check )
 			{
-				time_check = int((SDL_GetTicks() / 120) % 2);
+				time_check = int((SDL_GetTicks() / 50) % 2);
 
 				frame++;
 				if (frame >= 10)
@@ -178,10 +168,10 @@ void Tile::update( const int &man_x, bool restart )
 	}
 	else if (type == ROCK && !FINALE)
 	{
-		if (man_x >= box.x - 35 && man_x <= box.x + box.w && !go_down )
+		if (man_x >= box.x - 25 && man_x <= box.x + box.w && !go_down )
 			go_down = true;
 		
-		if (go_down)	box.y += 5;
+		if (go_down)	box.y += 8;
 
 		if (box.y >= SCREEN_HEIGHT)
 		{
@@ -201,11 +191,20 @@ void Tile::update( const int &man_x, bool restart )
 				if (go_up)		box.y -= 2;
 				else			box.y += 2;
 
-				if (box.y <= start_y - 20)			go_up = false;
+				if (box.y <= start_y - 20)
+				{
+						go_up = false;
+						play_sound = false;
+				}
 				else if (box.y >= start_y)
 				{
 					shake = true;
 					go_up = true;
+					if (!play_sound)
+					{
+						Mix_PlayChannel( -1, boss_jump_sound, 0 );
+						play_sound = true;
+					}
 				}
 			}
 			else
@@ -265,7 +264,7 @@ void Tile::restart()
 	box.x = start_x;
 	box.y = start_y;
 
-	play_sound = dead = false;
+	go_down = play_sound = dead = false;
 
 	if (type == GHOST || type == PLATFORM)
 		frame = 0;

@@ -28,4 +28,4 @@ public:
 };
 
 
-#endif // BOOMERANG_H_INCLUDED
+#endif

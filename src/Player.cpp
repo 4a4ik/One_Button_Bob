@@ -25,28 +25,6 @@ Player::Player(int X, int Y)
 
 void Player::handle_input( int type, SDL_Scancode key_code, int map_type )
 {
-	/*
-	if( type == 1 && !dead)
-	{
-		switch (key_code)
-		{
-			case SDL_SCANCODE_UP: yVel = JUMP_SPEED; break;
-		//	case SDL_SCANCODE_DOWN: yVel += 2; break;
-			case SDL_SCANCODE_LEFT: xVel = -MAN_XPEED; break;
-			case SDL_SCANCODE_RIGHT: xVel = MAN_XPEED; break;
-		}
-	}
-	else if( type == 0 && !dead)
-	{
-		switch (key_code)
-		{
-		//	case SDL_SCANCODE_UP: yVel += 2; break;
-		//	case SDL_SCANCODE_DOWN: yVel -= 2; break;
-			case SDL_SCANCODE_LEFT: xVel = 0; break;
-			case SDL_SCANCODE_RIGHT: xVel = 0; break;
-		}
-	}*/
-
 	if (type == 3 && !dead )		pressed = true;
 
 	else if (type == 4 && !dead)		pressed = false;
@@ -59,6 +37,11 @@ void Player::handle_input( int type, SDL_Scancode key_code, int map_type )
 		force = 0;
 		Mix_PlayChannel( -1, jump_sound, 0 );  
 	}
+
+	else if (type == 4 && jump && !dead && ( map_type == CLICK_JUMP || map_type == CLICK_JUMP_STOP ) )
+	{
+		force = 0;
+	}
 }
 
 SDL_Rect Player::get_box()
@@ -66,9 +49,9 @@ SDL_Rect Player::get_box()
 	return box;
 }
 
-void Player::update( std::vector<Tile> &tiles, int map_type, bool ending )
+void Player::update( std::vector<Tile> &tiles, int map_type )
 {	
-	if (ending || map_type == CLICK_LEDDER || map_type == CLICK_SHOOT || map_type == CLICK_JUMP || map_type == CLICK_STOP )
+	if (ENDING)
 		go_right = true;
 
 	if (map_type == CLICK_BOSS && pressed && !FINALE)
@@ -76,7 +59,7 @@ void Player::update( std::vector<Tile> &tiles, int map_type, bool ending )
 		go_right = !go_right;
 		pressed = false;
 	}
-	if (!ending && map_type != CLICK_JUMP_STOP && map_type != CLICK_ACCELERATE)
+	if (!ENDING && map_type != CLICK_JUMP_STOP && map_type != CLICK_ACCELERATE)
 	{
 		if (go_right)  xVel =  MAN_XPEED;
 		if (!go_right) xVel = -MAN_XPEED;
@@ -91,16 +74,16 @@ void Player::update( std::vector<Tile> &tiles, int map_type, bool ending )
 
 	if (pressed && map_type == CLICK_STOP)			xVel = 0;
 
-	if (pressed && map_type == CLICK_ACCELERATE)
+	if (pressed && map_type == CLICK_ACCELERATE && xVel <= 7)
 	{
-		xVel += 1.2f;
+		xVel += 1.35f;
 		pressed = false;
 	}
 
 	else if (map_type == CLICK_ACCELERATE && xVel >= 0)			xVel -= 0.2f;
 
 	// Move man RIGHT
-	if (!dead && !ending && map_type != END)			box.x += (int)xVel;
+	if (!dead && !ENDING && map_type != END)			box.x += (int)xVel;
 
 	//Off the screen
 	if( box.x < 0 || touches_wall( box, tiles, col_tile ) )
@@ -140,7 +123,7 @@ void Player::update( std::vector<Tile> &tiles, int map_type, bool ending )
 		dead = true;
 		shake = 1;
 
-		tiles[ col_tile ].killer = true;
+		tiles[ col_tile ].dead = true;
 		frame = 0;
 		force = 0;
 	}

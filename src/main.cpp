@@ -31,7 +31,6 @@ int main(int argc, char* argv[])
 		std::cout << "Can't init the game :/  " << SDL_GetError() << std::endl;
 		system("PAUSE"); // to keep console open after crash
 		return -1;
-		
 	}
 	
 	TheGame.clean();

@@ -1,24 +1,27 @@
 #include"includes.h"
 #include"Tiles.h"
 
+// music sounds
 Mix_Music *music = NULL;
 Mix_Music *victory_music = NULL;
 
+// sound effects
 Mix_Chunk *jump_sound = NULL;
 Mix_Chunk *dead_sound = NULL;
 Mix_Chunk *boomerang_sound = NULL;
 Mix_Chunk *explosion_sound = NULL;
 Mix_Chunk *boss_dead_sound = NULL;
 Mix_Chunk *boss_dead_sound2 = NULL;
+Mix_Chunk *boss_jump_sound = NULL;
 Mix_Chunk *ghost_sound = NULL;
 Mix_Chunk *hurt_sound = NULL;
 
 bool inside_box( int x1, int y1, int x2, int y2, int w2, int h2 )
 {
+	// If point inside box
 	if( x1 >= x2 && x1 <= x2 + w2 && y1 >= y2 && y1 <= y2 + h2 )
-	{
 		return true;
-	}
+
 	return false;
 }
 
@@ -41,26 +44,19 @@ bool check_collision( SDL_Rect A, SDL_Rect B )
     rightB = B.x + B.w;
     topB = B.y;
     bottomB = B.y + B.h;
+
 	//If any of the sides from A are outside of B
     if( bottomA <= topB )
-    {
         return false;
-    }
     
     if( topA >= bottomB )
-    {
         return false;
-    }
     
     if( rightA <= leftB )
-    {
         return false;
-    }
     
     if( leftA >= rightB )
-    {
         return false;
-    }
     
     //If none of the sides from A are outside B
     return true;
@@ -68,27 +64,30 @@ bool check_collision( SDL_Rect A, SDL_Rect B )
 
 bool init_music()
 {
-	//The music that will be played
+	// load music that will be played
 	music = Mix_LoadMUS( "files/audio/theme.wav" );
 	victory_music = Mix_LoadMUS( "files/audio/victory.wav" );
 
+	// load sound effects
 	jump_sound = Mix_LoadWAV( "files/audio/jump.wav" );
 	dead_sound = Mix_LoadWAV( "files/audio/dead.wav" );
 	explosion_sound = Mix_LoadWAV( "files/audio/explosion.wav" );
 	boomerang_sound = Mix_LoadWAV( "files/audio/boomerang.wav" );
 	boss_dead_sound = Mix_LoadWAV( "files/audio/boss_dead.wav" );
 	boss_dead_sound2 = Mix_LoadWAV( "files/audio/boss_dead2.wav" );
+	boss_jump_sound = Mix_LoadWAV( "files/audio/boss_jump.wav" );
 	ghost_sound = Mix_LoadWAV( "files/audio/ghost.wav" );
 	hurt_sound = Mix_LoadWAV( "files/audio/hurt.wav" );
 
-	if( !music || !hurt_sound || !jump_sound || !dead_sound || !boomerang_sound || !explosion_sound || !boss_dead_sound || !boss_dead_sound2 || !ghost_sound || !victory_music  )
+	if( !music || !hurt_sound || !jump_sound || !dead_sound || !boomerang_sound || !explosion_sound || !boss_dead_sound || !boss_jump_sound || !boss_dead_sound2 || !ghost_sound || !victory_music  )
 	{
 		printf("Unable to play wav file: %s\n", Mix_GetError());
 		return false;
 	}
 
-	Mix_PlayMusic( music, -1 );
-	Mix_VolumeMusic(60); 
+	Mix_PlayMusic( music, -1 );		// Loop forever
+	Mix_VolumeMusic(60);			// Volume maximum = MIX_MAX_VOLUME
+	Mix_PauseMusic();				// Start with pause so pause music
 
 	return true;
 }
@@ -117,6 +116,7 @@ bool touches_wall( SDL_Rect &box, std::vector<Tile> &tiles, int &col_box )
         //If the collision box touches the wall tile
 		if( check_collision( box, tiles[ t ].get_box() ) == true  && ( tiles[ t ].type == WALL || tiles[ t ].type == PLATFORM ))
         {
+			// tell what tile it is
 			col_box = t;
             return true;
         }
@@ -127,46 +127,48 @@ bool touches_wall( SDL_Rect &box, std::vector<Tile> &tiles, int &col_box )
 
 bool touches_ledder( SDL_Rect &box, std::vector<Tile> &tiles )
 {
-    //Go through the tiles
+    // Go through the tiles
 	for( int t = 0; t < (int)tiles.size(); t++ )
     {
-        //If the collision box touches the wall tile
+        // If the collision box touches the ledder tile
 		if( check_collision( box, tiles[ t ].get_box() ) == true  && ( tiles[ t ].type == LEDDER ))
         {
             return true;
         }
     }
-    //If no wall tiles were touched
+    // If no wall tiles were touched
     return false;
 }
 
 bool touches_enemy( SDL_Rect &box, std::vector<Tile> &tiles, int &col_box )
 {
-    //Go through the tiles
+    // Go through the tiles
 	for( int t = 0; t < (int)tiles.size(); t++ )
     {
-        //If the collision box touches the wall tile
+        // If the collision box touches the enemy tile
 		if( check_collision( box, tiles[ t ].get_box() ) == true  && tiles[ t ].type >= ARROW  )
         {
+			// tell what tile it is
 			col_box = t;
             return true;
         }
     }
-    //If no wall tiles were touched
+    // If no wall tiles were touched
     return false;
 }
 
 bool set_tiles( std::vector<Tile> &tiles, int level_num )
 {
-	//clear all existing tiles before creating new
+	// clear all existing tiles before creating new
 	tiles.clear();
 
+	// level to load
 	std::string level_name = "files/levels/level_00.map";
 
-	level_name[ 19 ] = (char)(level_num / 10 + 48); // ASCII table numbers start from 48 position
-	level_name[ 20 ] = (char)(level_num % 10 + 48);
+	level_name[ 19 ] = (char)(level_num / 10 + 48); // ASCII table, numbers start from 48 position
+	level_name[ 20 ] = (char)(level_num % 10 + 48); // change string according to level_num
 
-    //The tile offsets
+    // The tile offsets
     int x = 0, y = 0, w = 0, h = 0;
 
 	//Open the map
@@ -186,7 +188,6 @@ bool set_tiles( std::vector<Tile> &tiles, int level_num )
 	//Determines what kind of tile will be made
     int tileType = -1;
 
-
 	//Initialize the tiles
 	while( !map.eof() ) // while not end of file
 	{
@@ -201,7 +202,7 @@ bool set_tiles( std::vector<Tile> &tiles, int level_num )
             return false;
         }
 
-		//create new item
+		//create new tile
 		tiles.push_back( Tile( x, y, w , h, tileType ) );
 	}
 
@@ -240,49 +241,63 @@ void save_tiles( std::vector<Tile> &tiles, int level_num  )
 
 void change_tiles( std::vector<Tile> &tiles, int x, int y, int type, int action )
 {
+	// -1 to check it's 1 click or second
 	static int start_x = -1;
 
+	// if developer mode and right click pressed
 	if ( action == DELETE )
 	{
+		// go through the tiles
 		for( unsigned int n = 0; n < tiles.size(); n++ )
 		{
+			// if cursor is inside tile
 			if( inside_box( x, y, tiles[ n ].start_x, tiles[ n ].start_y, tiles[ n ].box.w, tiles[ n ].box.h ) )
 			{
+				// delete tile
 				tiles.erase( tiles.begin() + n );
 				break;
 			}
 		}
 	}
+	// Create new tile
 	else
 	{
 		if ( type == WALL )
 		{
 			if ( start_x == -1 )
 			{
+				// Floor from here to x
 				start_x = x;
 			}
 			else
 			{
+				// check if start_x is to the left of x
 				if ( start_x > x )
 				{
 					start_x += x;
 					x = start_x - x;
 					start_x -= x;
 				}
+
+				// 2 floor in LEDDER levels
 				if ( y  > 300 )
 					y = 340;
 
+				// basic floor
 				else
 					y = 240;
 
+				// if it's not a point
 				if ( start_x - x )
 				{
 					tiles.push_back( Tile( start_x, y, x - start_x, 5, type ) );
 				}
+				// restart
 				start_x = -1;
 			}
 		}
 
+		// Just create tiles where player clicks
 		else if ( type == TORCH )
 			tiles.push_back( Tile( x, y, TORCH_WIDTH * MAGNIFY, TORCH_HEIGHT * MAGNIFY, type ) );
 
@@ -322,7 +337,6 @@ void change_tiles( std::vector<Tile> &tiles, int x, int y, int type, int action 
 
 		else if ( type == BOSS )
 			tiles.push_back( Tile( x, 232, BOSS_WIDTH * MAGNIFY, BOSS_HEIGHT * MAGNIFY, type ) );
-
 	}
 }
 

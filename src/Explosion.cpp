@@ -2,11 +2,8 @@
 
 Explosion::Explosion( int X, int Y )
 {
-	boss_x = X;
-	boss_y = Y;
-
-	box.x = boss_x + rand() % ( BOSS_WIDTH  + 5 ) * MAGNIFY - 50;
-	box.y = boss_y + rand() % ( BOSS_HEIGHT + 5 ) * MAGNIFY - 50;
+	box.x = X + rand() % ( BOSS_WIDTH  + 5 ) * MAGNIFY - 50;
+	box.y = Y + rand() % ( BOSS_HEIGHT + 5 ) * MAGNIFY - 50;
 
 	box.w = EXPLOSION_WIDTH;
 	box.h = EXPLOSION_HEIGHT;
@@ -18,9 +15,9 @@ Explosion::Explosion( int X, int Y )
 	play_sound = false;
 }
 
-void Explosion::update( bool ending )
+void Explosion::update()
 {
-	if (ending)
+	if (FINALE)
 	{		
 		if ( random )
 			random--;
@@ -34,12 +31,12 @@ void Explosion::update( bool ending )
 		if ( !random )
 			frame++;
 
-
 		if (frame >= 6)
 		{
 			frame = 0;
 			frame_line++;
 		}
+
 		if (frame_line >= 8)
 		{
 			box.x = rand() % ( SCREEN_WIDTH - 40 );
@@ -50,6 +47,7 @@ void Explosion::update( bool ending )
 			play_sound = false;
 		}
 	}
+
 	else
 	{
 		frame = 0;

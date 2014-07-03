@@ -23,9 +23,7 @@ public:
 
 	SDL_Window* m_pWindow;
 	SDL_Renderer* m_pRenderer;
-
-
 };
 
 
-#endif  //  _GAME_H
+#endif 
